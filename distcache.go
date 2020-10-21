@@ -123,8 +123,9 @@ func (rs ResultSource) String() string {
 		return "cache_peer"
 	case ResultPeerGet:
 		return "get_peer"
+	default:
+		return "unknown"
 	}
-	return "unknown"
 }
 
 func (c *Cache) Get(ctx context.Context, key string) ([]byte, ResultSource, error) {
@@ -173,11 +174,7 @@ func (c *Cache) get(ctx context.Context, key string) (getResult, error) {
 	}
 
 	// Otherwise, fallback to getting locally.
-	val, err := c.getter.Get(ctx, key)
-	if err != nil {
-		return getResult{}, err
-	}
-	return getResult{Source: ResultLocalGet, Value: val}, nil
+	return c.fallbackToLocal(ctx, key)
 }
 
 func (c *Cache) getFromStores(ctx context.Context, key string) (getResult, bool) {
@@ -211,9 +208,18 @@ func (c *Cache) getLocal(ctx context.Context, key string) (getResult, error) {
 	return getResult{Source: ResultLocalGet, Value: val}, nil
 }
 
+func (c *Cache) fallbackToLocal(ctx context.Context, key string) (getResult, error) {
+	val, err := c.getter.Get(ctx, key)
+	if err != nil {
+		return getResult{}, err
+	}
+	c.populateHotStore(ctx, key, val)
+	return getResult{Source: ResultLocalGet, Value: val}, nil
+}
+
 func (c *Cache) populateHotStore(ctx context.Context, key string, val []byte) {
 	// TODO(ryanfowler): How do we populate the hot cache?
-	if rand.Int31n(5) == 0 {
+	if rand.Int31n(5) == 0 { //nolint:gosec
 		_ = c.hotStore.Set(ctx, key, val)
 	}
 }
@@ -249,6 +255,8 @@ func (c *Cache) SetPeers(peers ...string) {
 	for addr, peer := range existingPeers {
 		if _, ok := newPeers[addr]; !ok {
 			// TODO(ryanfowler): How do we handle an error here?
+			// Also, it would be more ideal to do a graceful
+			// shutdown here.
 			_ = peer.Close()
 		}
 	}

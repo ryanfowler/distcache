@@ -38,6 +38,7 @@ type Server struct {
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	val, res, err := s.Cache.Get(ctx, req.Key)
 	if err != nil {
+		// TODO(ryanfowler): Use an appropriate grpc error here.
 		return nil, err
 	}
 	cacheHit := res == distcache.ResultHotCache || res == distcache.ResultLocalCache

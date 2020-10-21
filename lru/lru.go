@@ -77,6 +77,17 @@ func (l *LRU) Size() int {
 	return l.size
 }
 
+func (l *LRU) Range(fn func(key string, val []byte) bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	for e := l.valList.Front(); e != nil; e = e.Next() {
+		value := e.Value.(*lruValue)
+		if !fn(value.key, value.val) {
+			return
+		}
+	}
+}
+
 func (l *LRU) Set(ctx context.Context, key string, val []byte) error {
 	if val == nil {
 		return nil
