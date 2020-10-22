@@ -31,34 +31,6 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-type Getter interface {
-	Get(ctx context.Context, key string) ([]byte, error)
-}
-
-type GetterFunc func(ctx context.Context, key string) ([]byte, error)
-
-func (gf GetterFunc) Get(ctx context.Context, key string) ([]byte, error) {
-	return gf(ctx, key)
-}
-
-type Setter interface {
-	Set(ctx context.Context, key string, val []byte) error
-}
-
-type Peer interface {
-	io.Closer
-	Get(ctx context.Context, key string) ([]byte, ResultSource, error)
-}
-
-type PeerCreator interface {
-	NewPeer(addr string) Peer
-}
-
-type Store interface {
-	Getter
-	Setter
-}
-
 type Cache struct {
 	me string
 
@@ -96,36 +68,6 @@ func New(opts Options) *Cache {
 	}
 	c.SetPeers(opts.Peers...)
 	return c
-}
-
-type ResultSource int
-
-const (
-	ResultNone ResultSource = iota
-	ResultHotCache
-	ResultLocalCache
-	ResultLocalGet
-	ResultPeerCache
-	ResultPeerGet
-)
-
-func (rs ResultSource) String() string {
-	switch rs {
-	case ResultNone:
-		return "none"
-	case ResultHotCache:
-		return "cache_hot"
-	case ResultLocalCache:
-		return "cache_local"
-	case ResultLocalGet:
-		return "get_local"
-	case ResultPeerCache:
-		return "cache_peer"
-	case ResultPeerGet:
-		return "get_peer"
-	default:
-		return "unknown"
-	}
 }
 
 func (c *Cache) Get(ctx context.Context, key string) ([]byte, ResultSource, error) {
@@ -265,4 +207,62 @@ func (c *Cache) SetPeers(peers ...string) {
 	c.hash = newHash
 	c.peers = newPeers
 	c.mu.Unlock()
+}
+
+type Getter interface {
+	Get(ctx context.Context, key string) ([]byte, error)
+}
+
+type GetterFunc func(ctx context.Context, key string) ([]byte, error)
+
+func (gf GetterFunc) Get(ctx context.Context, key string) ([]byte, error) {
+	return gf(ctx, key)
+}
+
+type Setter interface {
+	Set(ctx context.Context, key string, val []byte) error
+}
+
+type Peer interface {
+	io.Closer
+	Get(ctx context.Context, key string) ([]byte, ResultSource, error)
+}
+
+type PeerCreator interface {
+	NewPeer(addr string) Peer
+}
+
+type Store interface {
+	Getter
+	Setter
+}
+
+type ResultSource int
+
+const (
+	ResultNone ResultSource = iota
+	ResultHotCache
+	ResultLocalCache
+	ResultLocalGet
+	ResultPeerCache
+	ResultPeerGet
+)
+
+func (rs ResultSource) String() string {
+	switch rs {
+	case ResultNone:
+		return "none"
+	case ResultHotCache:
+		return "cache_hot"
+	case ResultLocalCache:
+		return "cache_local"
+	case ResultLocalGet:
+		return "get_local"
+	case ResultPeerCache:
+		return "cache_peer"
+	case ResultPeerGet:
+		return "get_peer"
+	default:
+		return "unknown"
+	}
 }
