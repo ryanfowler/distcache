@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2 // indirect
-	golang.org/x/net v0.0.0-20201024042810-be3efd7ff127 // indirect
+	golang.org/x/net v0.0.0-20201026091529-146b70c837a4 // indirect
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
 	golang.org/x/sys v0.0.0-20201024232916-9f70ab9862d5 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e // indirect
