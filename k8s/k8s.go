@@ -7,7 +7,6 @@ import (
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/watch"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -66,7 +65,7 @@ func (c *Client) Wait() {
 }
 
 func (c *Client) start(ctx context.Context) error {
-	i, err := c.watch(ctx)
+	i, err := c.client.Endpoints(c.namespace).Watch(ctx, metav1.ListOptions{Watch: true})
 	if err != nil {
 		return err
 	}
@@ -115,12 +114,6 @@ func (c *Client) start(ctx context.Context) error {
 	}()
 
 	return nil
-}
-
-func (c *Client) watch(ctx context.Context) (watch.Interface, error) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	return c.client.Endpoints(c.namespace).Watch(ctx, metav1.ListOptions{Watch: true})
 }
 
 func (c *Client) setPeers(ctx context.Context) error {
