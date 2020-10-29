@@ -2,11 +2,12 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -18,7 +19,6 @@ type Client struct {
 	onNewPeers func(...string)
 	peerSetter PeerSetter
 	portName   string
-	wg         sync.WaitGroup
 }
 
 type PeerSetter interface {
@@ -34,7 +34,7 @@ type Options struct {
 	OnNewPeers func(peers ...string)
 }
 
-func New(ctx context.Context, opts Options) (*Client, error) {
+func New(opts Options) (*Client, error) {
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		return nil, err
@@ -43,80 +43,17 @@ func New(ctx context.Context, opts Options) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	c := &Client{
+	return &Client{
 		client:     client,
 		namespace:  opts.Namespace,
 		onError:    opts.OnError,
 		onNewPeers: opts.OnNewPeers,
 		peerSetter: opts.PeerSetter,
 		portName:   opts.PortName,
-	}
-
-	if err = c.start(ctx); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	}, nil
 }
 
-func (c *Client) Wait() {
-	c.wg.Wait()
-}
-
-func (c *Client) start(ctx context.Context) error {
-	i, err := c.client.Endpoints(c.namespace).Watch(ctx, metav1.ListOptions{Watch: true})
-	if err != nil {
-		return err
-	}
-
-	if err = c.setPeers(ctx); err != nil {
-		return err
-	}
-
-	c.wg.Add(1)
-	go func() {
-		defer c.wg.Done()
-		for {
-			select {
-			case <-ctx.Done():
-				i.Stop()
-				return
-			case <-i.ResultChan():
-			}
-
-			// Empty the reuslt chan before fetching peers.
-			for {
-				select {
-				case <-i.ResultChan():
-					continue
-				default:
-				}
-				break
-			}
-
-			for {
-				err := c.setPeers(ctx)
-				if err == nil {
-					break
-				}
-				if c.onError != nil {
-					c.onError(err)
-				}
-				select {
-				case <-ctx.Done():
-				case <-time.After(time.Second):
-					continue
-				}
-				break
-			}
-		}
-	}()
-
-	return nil
-}
-
-func (c *Client) setPeers(ctx context.Context) error {
+func (c *Client) RefreshPeers(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
@@ -146,4 +83,60 @@ func (c *Client) setPeers(ctx context.Context) error {
 
 	c.peerSetter.SetPeers(peers...)
 	return nil
+}
+
+func (c *Client) Watch(ctx context.Context) error {
+	for {
+		err := c.watch(ctx)
+		if err != nil && c.onError != nil {
+			c.onError(err)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+}
+
+func (c *Client) watch(ctx context.Context) error {
+	i, err := c.client.Endpoints(c.namespace).Watch(ctx, metav1.ListOptions{Watch: true})
+	if err != nil {
+		return err
+	}
+	for {
+		if err = c.waitToRefresh(ctx, i); err != nil {
+			return err
+		}
+	}
+}
+
+func (c *Client) waitToRefresh(ctx context.Context, i watch.Interface) error {
+	timer := time.NewTimer(10 * time.Minute)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case _, ok := <-i.ResultChan():
+		if !ok {
+			return errors.New("watch channel closed")
+		}
+	case <-timer.C:
+	}
+
+	for {
+		err := c.RefreshPeers(ctx)
+		if err == nil {
+			return nil
+		}
+		if c.onError != nil {
+			c.onError(err)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
 }
