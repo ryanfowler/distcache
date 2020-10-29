@@ -104,6 +104,7 @@ func (c *Client) watch(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer i.Stop()
 	for {
 		if err = c.waitToRefresh(ctx, i); err != nil {
 			return err
