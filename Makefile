@@ -11,6 +11,10 @@ all:
 gen-proto:
 	@./scripts/proto/gen_proto.sh
 
+.PHONY: lint
+lint:
+	@golangci-lint run
+
 .PHONY: test
 test:
 	@go test -race -cover ./...
