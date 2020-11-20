@@ -24,17 +24,23 @@ package grpc
 
 import (
 	"context"
+	"net"
 
 	"github.com/ryanfowler/distcache"
 	pb "github.com/ryanfowler/distcache/grpc/peerpb"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 var _ (pb.PeerServer) = (*Server)(nil)
 
+type Cache interface {
+	Get(ctx context.Context, key string) ([]byte, distcache.ResultSource, error)
+}
+
 type Server struct {
-	Cache *distcache.Cache
+	Cache Cache
 	pb.UnimplementedPeerServer
 }
 
@@ -46,4 +52,24 @@ func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, 
 	}
 	cacheHit := res == distcache.ResultHotCache || res == distcache.ResultLocalCache
 	return &pb.GetResponse{Value: val, CacheHit: cacheHit}, nil
+}
+
+func (s *Server) Listen(ctx context.Context, addr string, opt ...grpc.ServerOption) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	grpcServer := grpc.NewServer(opt...)
+	pb.RegisterPeerServer(grpcServer, s)
+
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		<-ctx.Done()
+		grpcServer.GracefulStop()
+	}()
+
+	return grpcServer.Serve(lis)
 }
