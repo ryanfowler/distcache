@@ -39,7 +39,8 @@ type Server struct {
 }
 
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	val, res, err := s.Cache.Get(ctx, req.Key)
+	ctx = withRequestCount(ctx, int(req.GetPeerRequestCount()))
+	val, res, err := s.Cache.Get(ctx, req.GetKey())
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

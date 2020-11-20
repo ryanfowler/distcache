@@ -32,6 +32,7 @@ service Peer {
 
 message GetRequest {
     string key = 1;
+    int32 peer_request_count = 2;
 }
 
 message GetResponse {

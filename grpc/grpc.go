@@ -24,6 +24,7 @@ package grpc
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ryanfowler/distcache"
 	"google.golang.org/grpc"
@@ -35,4 +36,21 @@ type PeerCreator struct {
 
 func (pc *PeerCreator) NewPeer(addr string) distcache.Peer {
 	return NewClient(context.Background(), addr, pc.DialOptions...)
+}
+
+const maxRequestCount = 10
+
+var errMaxRequestCountExceeded = errors.New("max peer request count exceeded")
+
+type requestCountKeyType int
+
+const requestCountKey requestCountKeyType = 0
+
+func getRequestCount(ctx context.Context) int {
+	count, _ := ctx.Value(requestCountKey).(int)
+	return count
+}
+
+func withRequestCount(ctx context.Context, count int) context.Context {
+	return context.WithValue(ctx, requestCountKey, count)
 }

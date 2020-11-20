@@ -55,7 +55,17 @@ func (c *Client) Get(ctx context.Context, key string) ([]byte, distcache.ResultS
 	if c.err != nil {
 		return nil, distcache.ResultNone, c.err
 	}
-	res, err := c.client.Get(ctx, &pb.GetRequest{Key: key})
+
+	count := getRequestCount(ctx)
+	count++
+	if count > maxRequestCount {
+		return nil, distcache.ResultNone, errMaxRequestCountExceeded
+	}
+
+	res, err := c.client.Get(ctx, &pb.GetRequest{
+		Key:              key,
+		PeerRequestCount: int32(count),
+	})
 	if err != nil {
 		return nil, distcache.ResultNone, err
 	}
