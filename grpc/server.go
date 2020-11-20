@@ -27,19 +27,21 @@ import (
 
 	"github.com/ryanfowler/distcache"
 	pb "github.com/ryanfowler/distcache/grpc/peerpb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ (pb.PeerServer) = (*Server)(nil)
 
 type Server struct {
 	Cache *distcache.Cache
+	pb.UnimplementedPeerServer
 }
 
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
 	val, res, err := s.Cache.Get(ctx, req.Key)
 	if err != nil {
-		// TODO(ryanfowler): Use an appropriate grpc error here.
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	cacheHit := res == distcache.ResultHotCache || res == distcache.ResultLocalCache
 	return &pb.GetResponse{Value: val, CacheHit: cacheHit}, nil
