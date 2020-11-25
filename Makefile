@@ -5,6 +5,7 @@ all:
 	@echo ""
 	@echo "commands:"
 	@echo "  gen-proto       - generate go files from protobufs"
+	@echo "  lint            - run linter"
 	@echo "  test            - run all tests"
 
 .PHONY: gen_proto
