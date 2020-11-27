@@ -26,7 +26,7 @@ import (
 	"context"
 
 	"github.com/ryanfowler/distcache"
-	pb "github.com/ryanfowler/distcache/grpc/peerpb"
+	pb "github.com/ryanfowler/distcache/grpc/peerpb/v1"
 	"google.golang.org/grpc"
 )
 
@@ -35,7 +35,7 @@ var _ distcache.Peer = (*Client)(nil)
 type Client struct {
 	err     error
 	address string
-	client  pb.PeerClient
+	client  pb.PeerServiceClient
 	conn    *grpc.ClientConn
 }
 
@@ -46,7 +46,7 @@ func NewClient(ctx context.Context, addr string, opts ...grpc.DialOption) *Clien
 	}
 	return &Client{
 		address: addr,
-		client:  pb.NewPeerClient(conn),
+		client:  pb.NewPeerServiceClient(conn),
 		conn:    conn,
 	}
 }

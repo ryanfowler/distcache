@@ -1,20 +1,30 @@
 .PHONY: all
 all:
-	@echo "imaged"
+	@echo "distcache"
 	@echo "make <cmd>"
 	@echo ""
 	@echo "commands:"
-	@echo "  gen-proto       - generate go files from protobufs"
 	@echo "  lint            - run linter"
+	@echo "  proto-compat    - check protobuf for breaking changes"
+	@echo "  proto-gen       - generate go files from protobufs"
+	@echo "  proto-lint      - lint protobuf files"
 	@echo "  test            - run all tests"
-
-.PHONY: gen_proto
-gen-proto:
-	@./scripts/proto/gen_proto.sh
 
 .PHONY: lint
 lint:
 	@golangci-lint run
+
+.PHONY: proto-compat
+proto-compat:
+	@buf check breaking --against '.git#branch=main'
+
+.PHONY: proto-gen
+proto-gen:
+	@./scripts/proto/gen_proto.sh
+
+.PHONY: proto-lint
+proto-lint:
+	@buf check lint
 
 .PHONY: test
 test:

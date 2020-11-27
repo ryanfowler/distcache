@@ -27,13 +27,13 @@ import (
 	"net"
 
 	"github.com/ryanfowler/distcache"
-	pb "github.com/ryanfowler/distcache/grpc/peerpb"
+	pb "github.com/ryanfowler/distcache/grpc/peerpb/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
-var _ (pb.PeerServer) = (*Server)(nil)
+var _ (pb.PeerServiceServer) = (*Server)(nil)
 
 type Cache interface {
 	Get(ctx context.Context, key string) ([]byte, distcache.ResultSource, error)
@@ -41,7 +41,7 @@ type Cache interface {
 
 type Server struct {
 	Cache Cache
-	pb.UnimplementedPeerServer
+	pb.UnimplementedPeerServiceServer
 }
 
 func (s *Server) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -59,7 +59,7 @@ func (s *Server) Listen(ctx context.Context, addr string, opt ...grpc.ServerOpti
 	defer cancel()
 
 	grpcServer := grpc.NewServer(opt...)
-	pb.RegisterPeerServer(grpcServer, s)
+	pb.RegisterPeerServiceServer(grpcServer, s)
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {

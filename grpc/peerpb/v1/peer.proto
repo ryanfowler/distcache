@@ -22,11 +22,11 @@
 
 syntax = "proto3";
 
-package peerpb;
+package grpc.peerpb.v1;
 
-option go_package = ".;peerpb";
+option go_package = ".;v1";
 
-service Peer {
+service PeerService {
     rpc Get(GetRequest) returns (GetResponse) {};
 }
 

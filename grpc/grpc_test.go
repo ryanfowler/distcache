@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/ryanfowler/distcache"
-	pb "github.com/ryanfowler/distcache/grpc/peerpb"
+	pb "github.com/ryanfowler/distcache/grpc/peerpb/v1"
 	"google.golang.org/grpc"
 )
 
@@ -64,7 +64,7 @@ func TestGRPC(t *testing.T) {
 			defer grpcServer.GracefulStop()
 
 			server := Server{Cache: &mockCache{getFn: test.getFn}}
-			pb.RegisterPeerServer(grpcServer, &server)
+			pb.RegisterPeerServiceServer(grpcServer, &server)
 
 			lis, err := net.Listen("tcp", ":0")
 			if err != nil {
