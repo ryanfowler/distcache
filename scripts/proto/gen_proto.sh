@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ex
 
 if ! docker info &> /dev/null; then
     echo 'Error: Docker is required to be running'

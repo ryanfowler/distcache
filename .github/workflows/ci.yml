@@ -2,9 +2,21 @@ name: Continuous Integration
 on: [push]
 
 jobs:
+  proto:
+    name: Proto
+    runs-on: ubuntu-20.04
+    if: github.ref != 'refs/heads/main'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Install buf
+      run: ./scripts/proto/install_buf.sh
+    - name: Lint protobuf
+      run: make proto-lint
+
   build:
     name: Build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         go: [ '1.14', '1.15' ]
