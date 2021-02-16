@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: [ '1.14', '1.15' ]
+        go: [ '1.15', '1.16' ]
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
