@@ -8,5 +8,5 @@ require (
 	google.golang.org/grpc v1.35.0
 	google.golang.org/protobuf v1.25.0
 	k8s.io/apimachinery v0.20.3
-	k8s.io/client-go v0.20.2
+	k8s.io/client-go v0.20.3
 )
