@@ -11,6 +11,7 @@ import (
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
+// Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
 // PeerServiceClient is the client API for PeerService service.
@@ -62,7 +63,7 @@ type UnsafePeerServiceServer interface {
 }
 
 func RegisterPeerServiceServer(s grpc.ServiceRegistrar, srv PeerServiceServer) {
-	s.RegisterService(&_PeerService_serviceDesc, srv)
+	s.RegisterService(&PeerService_ServiceDesc, srv)
 }
 
 func _PeerService_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -83,7 +84,10 @@ func _PeerService_Get_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-var _PeerService_serviceDesc = grpc.ServiceDesc{
+// PeerService_ServiceDesc is the grpc.ServiceDesc for PeerService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var PeerService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.peerpb.v1.PeerService",
 	HandlerType: (*PeerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
