@@ -24,7 +24,7 @@ proto-gen:
 
 .PHONY: proto-lint
 proto-lint:
-	@buf check lint
+	@buf lint
 
 .PHONY: test
 test:
