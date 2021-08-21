@@ -32,6 +32,6 @@ jobs:
     - name: Lint
       run: |
         go install honnef.co/go/tools/cmd/staticcheck@v0.2.0
-        make lint
+        $(go env GOPATH)/bin/staticcheck ./...
     - name: Test
       run: make test
