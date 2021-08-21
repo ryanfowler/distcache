@@ -12,7 +12,7 @@ all:
 
 .PHONY: lint
 lint:
-	@golangci-lint run
+	@staticcheck ./...
 
 .PHONY: proto-compat
 proto-compat:
