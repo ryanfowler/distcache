@@ -12,6 +12,7 @@ import (
 	"github.com/ryanfowler/distcache"
 	pb "github.com/ryanfowler/distcache/grpc/peerpb/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func TestGRPC(t *testing.T) {
@@ -77,7 +78,7 @@ func TestGRPC(t *testing.T) {
 				_ = grpcServer.Serve(lis)
 			}()
 
-			client := NewClient(ctx, lis.Addr().String(), grpc.WithInsecure())
+			client := NewClient(ctx, lis.Addr().String(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 			defer client.Close()
 
 			out, res, err := client.Get(ctx, test.key)
@@ -109,7 +110,7 @@ func TestGRPCLoop(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	client := NewClient(ctx, addr, grpc.WithInsecure())
+	client := NewClient(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	defer client.Close()
 
 	server := Server{Cache: &mockCache{
