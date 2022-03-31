@@ -16,7 +16,7 @@ lint:
 
 .PHONY: proto-compat
 proto-compat:
-	@buf check breaking --against '.git#branch=main'
+	@buf breaking --against '.git#branch=main'
 
 .PHONY: proto-gen
 proto-gen:
