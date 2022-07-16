@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/ryanfowler/distcache"
 	pb "github.com/ryanfowler/distcache/grpc/peerpb/v1"
@@ -125,9 +127,18 @@ func TestGRPCLoop(t *testing.T) {
 		_ = server.Listen(ctx, addr)
 	}()
 
-	_, _, err := client.Get(ctx, "keyboard cat")
-	if err == nil || !strings.Contains(err.Error(), errMaxRequestCountExceeded.Error()) {
-		t.Fatalf("unexpected error returned: %v", err)
+	err := retry(ctx, func(ctx context.Context) (bool, error) {
+		_, _, err := client.Get(ctx, "keyboard cat")
+		if err == nil {
+			return false, errors.New("error expected")
+		}
+		if !strings.Contains(err.Error(), errMaxRequestCountExceeded.Error()) {
+			return false, fmt.Errorf("wrong error: %w", err)
+		}
+		return true, nil
+	})
+	if err != nil {
+		t.Fatalf("unexpected result: %v", err)
 	}
 }
 
@@ -147,4 +158,21 @@ type mockCache struct {
 
 func (c *mockCache) Get(ctx context.Context, key string) ([]byte, distcache.ResultSource, error) {
 	return c.getFn(ctx, key)
+}
+
+func retry(ctx context.Context, fn func(context.Context) (bool, error)) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute)
+	defer cancel()
+	for {
+		ok, err := fn(ctx)
+		if ok {
+			return err
+		}
+
+		select {
+		case <-ctx.Done():
+			return err
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
 }
