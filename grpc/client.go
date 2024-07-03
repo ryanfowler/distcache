@@ -40,7 +40,7 @@ type Client struct {
 }
 
 func NewClient(ctx context.Context, addr string, opts ...grpc.DialOption) *Client {
-	conn, err := grpc.DialContext(ctx, addr, opts...)
+	conn, err := grpc.NewClient(addr, opts...)
 	if err != nil {
 		return &Client{err: err}
 	}
