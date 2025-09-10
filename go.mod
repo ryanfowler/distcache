@@ -7,7 +7,7 @@ toolchain go1.24.1
 require (
 	golang.org/x/sync v0.17.0
 	google.golang.org/grpc v1.75.1
-	google.golang.org/protobuf v1.36.8
+	google.golang.org/protobuf v1.36.9
 	k8s.io/apimachinery v0.34.0
 	k8s.io/client-go v0.34.0
 )
